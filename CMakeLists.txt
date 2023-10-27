@@ -17,14 +17,27 @@ set(DEVICE_FAMILY           STM32G4xx)
 set(DEVICE_NAME             STM32G431xx)
 set(DEVICE_FULL_NAME        STM32G431CBTX)
 
+include(cmake/utils.cmake)
+
+include(FetchContent)
+#FetchContent_Populate(
+FetchContent_Declare(
+        sa_stm32_g4
+        GIT_REPOSITORY https://github.com/reus-inc/sa_stm32_g4.git
+        GIT_TAG main
+        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Libs/sa_stm32_g4
+)
+if(NOT sa_stm32_g4_POPULATED)
+    FetchContent_Populate(sa_stm32_g4)
+endif()
+
 include_directories(
         App
         HW
         Core
         Drivers
+        Libs
 )
-
-include(cmake/utils.cmake)
 
 add_subdirectory(Drivers)
 #add_subdirectory(Libs)
@@ -33,6 +46,7 @@ file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
         ${CMAKE_CURRENT_SOURCE_DIR}/Core/*.*
         ${CMAKE_CURRENT_SOURCE_DIR}/App/*.*
         ${CMAKE_CURRENT_SOURCE_DIR}/HW/*.*
+        ${CMAKE_CURRENT_SOURCE_DIR}/Libs/*.*
         )
 
 add_executable(${PROJECT_NAME} Core/Src/main.c startup_stm32g431xx.s)
@@ -82,8 +96,9 @@ utils_target_generate_hex(${PROJECT_NAME})
 utils_target_generate_bin(${PROJECT_NAME})
 utils_target_print_size(${PROJECT_NAME})
 
-#target_compile_options(${PROJECT_NAME}
-#        PRIVATE
+target_compile_options(${PROJECT_NAME}
+        PRIVATE
+        -Wno-all
 #        -Wall
 #        -Wextra
 #        -Wpedantic
@@ -95,7 +110,7 @@ utils_target_print_size(${PROJECT_NAME})
 #        -Wshadow
 #        -Wconversion
 #        -Wsign-conversion
-#        )
+        )
 
 #if(RTT_LOG)
 #    add_subdirectory(libs/rtt)
