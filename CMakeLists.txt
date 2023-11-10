@@ -18,8 +18,8 @@ set(DEVICE_NAME             STM32G431xx)
 set(DEVICE_FULL_NAME        STM32G431CBTX)
 
 include(cmake/utils.cmake)
-
 include(FetchContent)
+
 #FetchContent_Populate(
 FetchContent_Declare(
         sa_stm32_g4

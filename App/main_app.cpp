@@ -2,16 +2,15 @@
 #include "tim.h"
 #include "iwdg.h"
 #include "main_controller.hpp"
+#include "IO/input_signal.hpp"
 #include "app_config.hpp"
 
 extern "C"
 {
-//    void HAL_IncTick() {
-//        uwTick += uwTickFreq;
-//        MainController::GetRef().SysTickTimersTickHandler();
-//    }
-
-    Button btn_grid_ = Button(BTN_IN_GPIO_Port, BTN_IN_Pin);
+    void HAL_IncTick() {
+        uwTick += uwTickFreq;
+        MainController::GetRef().SysTickTimersTickHandler();
+    }
 
     void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     {
@@ -24,8 +23,7 @@ extern "C"
             MainController::GetRef().TimTaskHandler();
         }
         if(htim->Instance == TIM7){
-            HAL_TIM_Base_Stop_IT(&htim7);
-            MainController::GetRef().BtnEventHandle(btn_grid_);
+            MainController::GetRef().UpdateSignals();
         }
         if(htim->Instance == TIM17){
             MainController::GetRef().UpdateConfig();
@@ -41,12 +39,6 @@ extern "C"
 
     void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     {
-//        if(GPIO_Pin == btn_grid_){
-//            MainController::GetRef().BtnEventHandle(btn_grid_);
-//        }
-        if(GPIO_Pin == btn_grid_){
-            btn_grid_.getState() ? HAL_TIM_Base_Start_IT(&htim7) : HAL_TIM_Base_Stop_IT(&htim7);
-        }
     }
 
     void EXTI_clear_enable(){
@@ -67,13 +59,16 @@ extern "C"
     }
 
     void AppInit(){
-        EXTI_clear_enable();
+//        EXTI_clear_enable();
         TIM_IT_clear_();
         HAL_TIM_Base_Start_IT(&htim1); // app tim
+        HAL_TIM_Base_Start_IT(&htim7); // signals & btns tim
         HAL_TIM_Base_Start_IT(&htim17); // dip config listener
         MainController::GetRef().BoardInit();
     }
 
     void AppLoop()
-    {}
+    {
+        MainController::GetRef().ProcessTimTasks();
+    }
 }

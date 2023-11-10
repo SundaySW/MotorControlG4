@@ -5,7 +5,8 @@
 #include <cstdint>
 #include "type_traits"
 
-namespace pin_impl{
+namespace PIN_BOARD{
+
 enum LOGIC_LEVEL{
     LOW = 0,
     HIGH = 1,
@@ -24,21 +25,7 @@ class PIN{
 public:
     template<typename T = InterfaceType>
     requires(std::is_base_of<PinReadable, T>::value)
-    constexpr inline LOGIC_LEVEL getValue(){
-        LOGIC_LEVEL retVal;
-        if((port_->IDR & pin_) != (uint32_t)LOGIC_LEVEL::LOW)
-            retVal = LOGIC_LEVEL::HIGH;
-        else
-            retVal = LOGIC_LEVEL::LOW;
-        if(inverted_)
-            return (retVal ? LOGIC_LEVEL::LOW : LOGIC_LEVEL::HIGH);
-        else
-            return retVal;
-    }
-
-    template<typename T = InterfaceType>
-    requires(std::is_base_of<PinReadable, T>::value)
-    constexpr inline LOGIC_LEVEL refresh(){
+    constexpr inline LOGIC_LEVEL getState(){
         currentState_ = getValue();
         return currentState_;
     }
@@ -88,8 +75,22 @@ private:
     GPIO_TypeDef* port_;
     uint16_t pin_;
     bool inverted_ = false;
+
+    template<typename T = InterfaceType>
+    requires(std::is_base_of<PinReadable, T>::value)
+    constexpr inline LOGIC_LEVEL getValue(){
+        LOGIC_LEVEL retVal;
+        if((port_->IDR & pin_) != (uint32_t)LOGIC_LEVEL::LOW)
+            retVal = LOGIC_LEVEL::HIGH;
+        else
+            retVal = LOGIC_LEVEL::LOW;
+        if(inverted_)
+            return (retVal ? LOGIC_LEVEL::LOW : LOGIC_LEVEL::HIGH);
+        else
+            return retVal;
+    }
 };
 
-} // namespace pin_impl
+} // namespace PIN_BOARD
 
 #endif //SND_STM32_PIN_HPP

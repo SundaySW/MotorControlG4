@@ -18,6 +18,17 @@ AppTimer::AppTimer(AppTimer::HandlerT handler, uint32_t msDelay)
 void AppTimer::UpdateState() {
     if(count_ >= interval_){
         interval_ = 0;
+        pending_ = true;
+    }
+}
+
+void AppTimer::IsPending() const{
+    return pending_;
+}
+
+void AppTimer::ProcessTask(){
+    if(pending_) {
+        pending_ = false;
         handler_();
     }
 }

@@ -3,11 +3,11 @@
 #include <cstdlib>
 #include <algorithm>
 
-#include "IO/PIN.hpp"
+#include "IO/pin.hpp"
 
 #include "stm32g4xx_hal_tim.h"
 
-using namespace pin_impl;
+using namespace PIN_BOARD;
 
 namespace StepperMotor{
 

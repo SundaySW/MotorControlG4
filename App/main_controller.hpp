@@ -3,15 +3,16 @@
 #define RASTERDRIVER_MAIN_CONTROLLER_HPP
 
 #include <array>
-#include "IO/PIN.hpp"
-#include "IO/Button.hpp"
+#include "IO/pin.hpp"
+#include "IO/button.hpp"
 #include "app_config.hpp"
 //#include "Timer/app_timer.hpp"
 #include "MotorImpl.hpp"
+#include "Timer/app_timer.hpp"
 
 using namespace RB::types;
 using namespace StepperMotor;
-using namespace pin_impl;
+using namespace PIN_BOARD;
 
 class MainController {
     using InputPinType = PIN<PinReadable>;
@@ -35,10 +36,16 @@ public:
         motor_controller_.UpdateConfig(config);
     }
 
+    void UpdateSignals(){
+        btn_grid_.Update();
+        for(std::size_t i = 0; i < input_pin_container_.size(); i++)
+            input_pin_container_[i].Update();
+    }
+
     void InvertPins(){
-        input_pin_container_[EXP_REQ].setInverted();
-        input_pin_container_[GRID_HOME_DETECT].setInverted();
-        input_pin_container_[GRID_INFIELD_DETECT].setInverted();
+        input_pin_container_[EXP_REQ].InvertSignalPin();
+        input_pin_container_[GRID_HOME_DETECT].InvertSignalPin();
+        input_pin_container_[GRID_INFIELD_DETECT].InvertSignalPin();
     }
 
     void BoardInit(){
@@ -137,10 +144,20 @@ public:
         motor_controller_.MakeStepsAfterSwitch();
     }
 
+    void BtnStateCheck(){
+        if(btn_grid_.getState()){
+            if(isInState(DEVICE_GRID_IN_FIELD))
+                RasterMoveHome();
+            else if(isInState(DEVICE_GRID_HOME))
+                RasterMoveInField();
+        }
+    }
+
     void BoardUpdate(){
         ErrorsCheck();
         LimitSwitchesCheck();
         ExpStateCheck();
+        BtnStateCheck();
     }
 
     void RasterMoveInField(bool slow = false){
@@ -252,32 +269,42 @@ public:
         current_tim_task_ = NO_TASKS;
     }
 
-//    void SysTickTimersTickHandler(){
-//        for(auto & timer : timers_)
-//            timer->TickHandle();
-//    }
-//    void ProcessMessage(){
-//    }
+    void SysTickTimersTickHandler(){
+        for(std::size_t i = 0; i < timers_.size(); i++)
+            timers_[i]->TickHandle();
+    }
+
+    void ProcessTimTasks(){
+        for(std::size_t i = 0; i < timers_.size(); i++)
+            timers_[i]->ProcessTask();
+    }
+
+    void ProcessMessage(){
+    }
 
 private:
-//    AppTimer msgReqTim1{[this](){ProcessMessage();}};
-//    AppTimer msgReqTim2{[this](){ProcessMessage();}};
-//    std::array<AppTimer*, 2> timers_{
-//        &msgReqTim1,
-//        &msgReqTim2
-//    };
 
     explicit MainController(MotorController &incomeMotorController)
             :motor_controller_(incomeMotorController)
     {}
 
-    static constexpr int kIN_PIN_CNT = 3;
-    std::array<InputPinType, kIN_PIN_CNT> input_pin_container_{
-            InputPinType(EXP_REQ_IN_GPIO_Port, EXP_REQ_IN_Pin),
-            InputPinType(SWITCH_1_IN_GPIO_Port, SWITCH_1_IN_Pin),
-            InputPinType(SWITCH_2_IN_GPIO_Port, SWITCH_2_IN_Pin),
+    static constexpr std::size_t kTIM_CNT = 2;
+    AppTimer msgReqTim1{[this](){ProcessMessage();}};
+    AppTimer msgReqTim2{[this](){ProcessMessage();}};
+    std::array<AppTimer*, kTIM_CNT> timers_{
+        &msgReqTim1,
+        &msgReqTim2
     };
-    static constexpr int kOUT_PIN_CNT = 3;
+
+    Button btn_grid_ = Button(BTN_IN_GPIO_Port, BTN_IN_Pin, 100);
+
+    static constexpr std::size_t kIN_PIN_CNT = 3;
+    std::array<InputSignal, kIN_PIN_CNT> input_pin_container_{
+            InputSignal(EXP_REQ_IN_GPIO_Port, EXP_REQ_IN_Pin, 1000),
+            InputSignal(SWITCH_1_IN_GPIO_Port, SWITCH_1_IN_Pin, 1000),
+            InputSignal(SWITCH_2_IN_GPIO_Port, SWITCH_2_IN_Pin, 1000),
+    };
+    static constexpr std::size_t kOUT_PIN_CNT = 3;
     std::array<OutputPinType, kOUT_PIN_CNT> output_pin_container_{
             OutputPinType(BTN_LED1_OUT_GPIO_Port, BTN_LED1_OUT_Pin),
             OutputPinType(BTN_LED2_OUT_GPIO_Port, BTN_LED2_OUT_Pin),
@@ -316,7 +343,7 @@ private:
     }
 
     bool isSignalHigh(INPUT_TYPE pin){
-        return static_cast<bool>(input_pin_container_[pin].getValue());
+        return static_cast<bool>(input_pin_container_[pin].getState());
     }
 
     void ChangeDeviceState(BOARD_STATUS new_status){

@@ -38,11 +38,15 @@ public:
     void SetMSDelay(uint32_t delay);
     void StopTimer();
     void StartTimer();
+    void IsPending() const;
+    void ProcessTask();
+
 private:
     __IO uint32_t count_{0};
     __IO uint32_t interval_{0};
     const uint32_t KTick_freq_ = HAL_TICK_FREQ_DEFAULT;
     bool disabled_ {true};
+    bool pending_ {false};
     const HandlerT handler_;
     void UpdateState();
 };
