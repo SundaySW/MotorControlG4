@@ -1,7 +1,10 @@
 #pragma once
 
+#include "Inc/spi.h"
+
 #include "app_config.hpp"
 #include "StepperMotor/StepperMotorBase.hpp"
+#include "StepperMotor/DRV8711.hpp"
 
 class MotorController : public StepperMotor::StepperMotorBase{
 public:
@@ -67,8 +70,11 @@ public:
 private:
     MotorController() = delete;
     MotorController(StepperMotor::StepperCfg& cfg)
-        : StepperMotor::StepperMotorBase(cfg)
-    {}
+        : StepperMotor::StepperMotorBase(cfg),
+          driver_(&hspi2, PIN<PinWriteable>(MOTOR_SCS_OUT_GPIO_Port, MOTOR_SCS_OUT_Pin))
+    {};
+
+    DRV8711::DRV8711 driver_;
 
     float config_acceleration_ {SERVICE_MOVE_ACCELERATION};
     float config_Vmax_ {SERVICE_MOVE_MAX_SPEED};

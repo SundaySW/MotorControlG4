@@ -15,7 +15,6 @@ using namespace StepperMotor;
 using namespace PIN_BOARD;
 
 class MainController {
-    using InputPinType = PIN<PinReadable>;
     using OutputPinType = PIN<PinWriteable>;
     using MotorStatus = StepperMotor::Mode;
 public:
@@ -51,6 +50,8 @@ public:
     void BoardInit(){
         UpdateConfig();
         InvertPins();
+        for(std::size_t i = 0; i < timers_.size(); i++)
+            timers_[i]->StartTimer();
         RasterMoveHome(true);
     }
 
@@ -166,7 +167,6 @@ public:
             StopMotor();
             return;
         }
-        FreezeSwitchCheck();
         ChangeDeviceState(DEVICE_SERVICE_MOVING);
         motor_controller_.GetInFieldPosition(slow);
     }
@@ -177,7 +177,6 @@ public:
             StopMotor();
             return;
         }
-        FreezeSwitchCheck();
         ChangeDeviceState(DEVICE_SERVICE_MOVING);
         motor_controller_.GetHomePosition(slow);
     }
@@ -199,7 +198,6 @@ public:
     void StartShakeExposition(){
         lastPosition_ = currentState_;
         ChangeDeviceState(DEVICE_SHAKE_SCANNING);
-        FreezeSwitchCheck();
         motor_controller_.Exposition();
     }
 
@@ -285,15 +283,18 @@ public:
 private:
 
     explicit MainController(MotorController &incomeMotorController)
-            :motor_controller_(incomeMotorController)
+        :motor_controller_(incomeMotorController)
     {}
 
-    static constexpr std::size_t kTIM_CNT = 2;
-    AppTimer msgReqTim1{[this](){ProcessMessage();}};
-    AppTimer msgReqTim2{[this](){ProcessMessage();}};
+    static constexpr std::size_t kTIM_CNT = 3;
+    AppTimer msgReqTim1 { [this](){ ProcessMessage(); }, 100};
+    AppTimer msgReqTim2 { [this](){ ProcessMessage(); }, 100};
+    AppTimer signalDelayTim { [this](){ SetInMotionSig(HIGH); }, 100};
+    AppTimer freezeSwitchTim { [this](){ UnFreezeSwitches(); }, 100};
     std::array<AppTimer*, kTIM_CNT> timers_{
         &msgReqTim1,
-        &msgReqTim2
+        &msgReqTim2,
+        &signalDelayTim
     };
 
     Button btn_grid_ = Button(BTN_IN_GPIO_Port, BTN_IN_Pin, 100);

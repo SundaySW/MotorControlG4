@@ -3,6 +3,7 @@
 #define RASTERDRIVER_APP_CONFIG_HPP
 
 #include "StepperMotor/StepperMotorBase.hpp"
+#include "sa_stm32_g4/eeprom_g4_map.hpp"
 
 #define TIME_GRID_BTN_LONG_PRESS        1000
 #define TOTAL_DISTANCE_N_OF_STEPS       9000
@@ -20,6 +21,10 @@
 #define SERVICE_MOVE_START_SPEED        500
 #define INIT_MOVE_MAX_SPEED             1500
 #define SERVICE_MOVE_MAX_SPEED          3000
+
+uint32_t EEPROM_START_ADDR = ADDR_FLASH_PAGE_63;
+uint32_t EEPROM_PAGE = 63;
+uint32_t PAGE_SIZE = 2048;
 
 //static void FreezeDeviceDelay(uint32_t delay){
 //    uint16_t msDelay = delay * 10 > UINT16_MAX ? UINT16_MAX : delay * 10;

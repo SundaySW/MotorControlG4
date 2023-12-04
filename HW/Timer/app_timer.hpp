@@ -32,8 +32,7 @@ public:
     using HandlerT = std::function<void()>;
 
     AppTimer() = delete;
-    explicit AppTimer(HandlerT);
-    explicit AppTimer(HandlerT, uint32_t);
+    explicit AppTimer(HandlerT, uint32_t msDelay, bool one_shot = false);
     void TickHandle();
     void SetMSDelay(uint32_t delay);
     void StopTimer();
@@ -45,9 +44,9 @@ private:
     __IO uint32_t count_{0};
     __IO uint32_t interval_{0};
     const uint32_t KTick_freq_ = HAL_TICK_FREQ_DEFAULT;
+    bool one_shot_ {false};
     bool disabled_ {true};
     bool pending_ {false};
     const HandlerT handler_;
     void UpdateState();
 };
-

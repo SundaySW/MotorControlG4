@@ -7,10 +7,10 @@
 
 extern "C"
 {
-    void HAL_IncTick() {
-        uwTick += uwTickFreq;
-        MainController::GetRef().SysTickTimersTickHandler();
-    }
+//    void HAL_IncTick() {
+//        uwTick += uwTickFreq;
+//        MainController::GetRef().SysTickTimersTickHandler();
+//    }
 
     void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     {
